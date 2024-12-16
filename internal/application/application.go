@@ -11,7 +11,6 @@ import (
 	"os"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/OinkiePie/calc/pkg/calculation"
 	"github.com/joho/godotenv"
@@ -24,7 +23,7 @@ type Config struct {
 func ConfigFromEnv() *Config {
 	if err := godotenv.Load(); err != nil {
 		log.Print("Файл .env не найден")
-}
+	}
 
 	config := new(Config)
 	config.Addr = os.Getenv("PORT")
@@ -80,9 +79,8 @@ type Request struct {
 
 type Response struct {
 	Status int					`json:"status"`
-	Content float64			`json:"content"`
+	Result float64			`json:"result"`
 	Error string				`json:"error"`
-	Timestamp int64			`json:"timestamp"`
 }
 
 type ctxReq struct{}
@@ -98,6 +96,7 @@ func RequestMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		// Чтение и разбор запроса
 		var req Request
 		defer r.Body.Close()
+
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil && err != io.EOF {
 			// При неудачной попытки преобразования запроса отправляем оишбку с кодом 500
 			sendErrorResponse(w, http.StatusInternalServerError, ErrFailedToUnmarshal)
@@ -114,7 +113,7 @@ func RequestMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		if matched, _ := regexp.MatchString(`^[0-9/*-+() ]*$`, req.Expression); !matched {
 			// Если в запросе что то кроме цифр и операторов отправляем ошибку с кодом 400
 
-			sendErrorResponse(w, http.StatusBadRequest, ErrInvalidChars)
+			sendErrorResponse(w, http.StatusUnprocessableEntity, ErrInvalidChars)
 			return 
 		}
 
@@ -130,7 +129,6 @@ func sendErrorResponse(w http.ResponseWriter, status int, err error) {
 	errorResponse := Response{
 		Status:    status,
 		Error:     err.Error(),
-		Timestamp: time.Now().Unix(),
 	}
 
 	jsonResponse, _ := json.Marshal(errorResponse)
@@ -142,8 +140,7 @@ func sendErrorResponse(w http.ResponseWriter, status int, err error) {
 func sendSuccessResponse(w http.ResponseWriter, answer float64) {
 	succesResponse := Response{
 		Status:    http.StatusOK,
-		Content:   answer,
-		Timestamp: time.Now().Unix(),
+		Result:   answer,
 	}
 
 	jsonResponse, _ := json.Marshal(succesResponse)
@@ -158,7 +155,7 @@ func CalcHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		// При появлении ошибки во время вычисленя отправляем запрос с ошибкой и кодом 400
-		sendErrorResponse(w, http.StatusBadRequest, err)
+		sendErrorResponse(w, http.StatusUnprocessableEntity, err)
 	} else {
 		// Инчае отправляем ответ с кодом 200
 		sendSuccessResponse(w, result)
