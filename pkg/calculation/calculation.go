@@ -2,6 +2,7 @@ package calculation
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"unicode"
@@ -56,7 +57,13 @@ func Calc(expression string) (float64, error) {
 	}
 
 	// После уничтожения скобок находит значение выражения
-	return parseExpression(expression)
+	result, err := parseExpression(expression)
+	if err != nil {
+		return 0, err
+	}
+	// Округляем до сотых
+	result = math.Floor(result*100)/100
+	return result, nil
 }
 
 func handleUnaryMinus(expression string) string {
@@ -166,6 +173,7 @@ func parseTerm(term string) (float64, error) {
 
 func parseFactor(factor string) (float64, error) {
 	parts := strings.Split(factor, "/") // Делим на делимые и делители
+
 	if len(parts) == 1 {
 		// Не получилось разбить на части т.к. ошибка или весь factor одно число
 		if factor == "" {

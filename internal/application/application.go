@@ -110,7 +110,7 @@ func RequestMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		if matched, _ := regexp.MatchString(`^[0-9/*-+() ]*$`, req.Expression); !matched {
+		if matched, _ := regexp.MatchString(`^[0-9/*-+(). ]*$`, req.Expression); !matched {
 			// Если в запросе что то кроме цифр и операторов отправляем ошибку с кодом 400
 
 			sendErrorResponse(w, http.StatusUnprocessableEntity, ErrInvalidChars)
