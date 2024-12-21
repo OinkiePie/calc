@@ -48,7 +48,7 @@ func TestCalc(t *testing.T) {
 		},
 		{
 			name: "Fractions #3",
-			expression: "10/3", expectedResult: 10.0/3.0,
+			expression: "10/3", expectedResult: 3.333,
 		},
 
 

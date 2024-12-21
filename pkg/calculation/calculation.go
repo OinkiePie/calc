@@ -3,6 +3,7 @@ package calculation
 import (
 	"fmt"
 	"math"
+	"regexp"
 	"strconv"
 	"strings"
 	"unicode"
@@ -25,6 +26,19 @@ func Calc(expression string) (float64, error) {
 	}
 
 	expression = handleUnaryMinus(expression) // Обработка унарного минуса
+
+	// Замена ")(число)" на ")*число"
+	re := regexp.MustCompile(`\)\s*(\d+)`)
+  expression = re.ReplaceAllString(expression, ")*$1")
+
+
+    // Замена "(число)" на "*число"
+  re = regexp.MustCompile(`(\d+)\s*\(`)
+  expression = re.ReplaceAllString(expression, "$1*(")
+
+	// Замена ")(" на ")*("
+  re = regexp.MustCompile(`\)\s*\(`)
+  expression = re.ReplaceAllString(expression, ")*(")
 
 	for {
 		// Проверка на правильное количество скобок и вычисление их значений
@@ -61,8 +75,8 @@ func Calc(expression string) (float64, error) {
 	if err != nil {
 		return 0, err
 	}
-	// Округляем до сотых
-	result = math.Floor(result*100)/100
+	// Округляем до тысячных
+	result = math.Floor(result*1000)/1000
 	return result, nil
 }
 

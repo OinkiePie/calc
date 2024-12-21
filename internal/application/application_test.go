@@ -11,6 +11,12 @@ import (
 	"github.com/OinkiePie/calc/internal/application"
 )
 
+type Response struct {
+	Result float64			`json:"result"`
+	Error string				`json:"error"`
+	Status int					`json:"status"`
+}
+
 // Проверка сервера, получаемого статуса и ошибок.
 // Проверка правильности вычисление находится в calculation_test.go
 func TestServer(t *testing.T) {
@@ -41,7 +47,7 @@ func TestServer(t *testing.T) {
 			name:           "Некорректное выражение",
 			method:					"POST",
 			request:       `{"expression": "invalid"}`,
-			expectedStatus: http.StatusBadRequest,
+			expectedStatus: http.StatusUnprocessableEntity,
 			expectedError:  application.ErrInvalidChars.Error(),
 		},
 		{
@@ -87,7 +93,7 @@ func TestServer(t *testing.T) {
 
 			byteResponse, _ := io.ReadAll(resp.Body) // Читает тело ответа
 			// Распаковывает JSON
-			var response application.Response
+			var response Response
 			_ = json.Unmarshal(byteResponse, &response)
 
 

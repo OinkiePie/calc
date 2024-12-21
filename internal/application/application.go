@@ -77,11 +77,16 @@ type Request struct {
 	Expression string 	`json:"expression"`
 }
 
-type Response struct {
+type SuccesResponse struct {
 	Status int					`json:"status"`
 	Result float64			`json:"result"`
+}
+
+type ErrorResponse struct {
+	Status int					`json:"status"`
 	Error string				`json:"error"`
 }
+
 
 type ctxReq struct{}
 
@@ -124,27 +129,44 @@ func RequestMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+func contains(arr []error, target error) bool {
+	for _, element := range arr {
+			if element == target {
+					return true // Элемент найден
+			}
+	}
+	return false // Элемент не найден
+}
 // sendErrorResponse - функция для отправки ответа об ошибке
 func sendErrorResponse(w http.ResponseWriter, status int, err error) {
-	errorResponse := Response{
-		Status:    status,
+
+	if !contains(calculation.KnownErrors, err) {
+		status = http.StatusInternalServerError
+	}
+
+	errorResponse := ErrorResponse{
+		Status: 	 status,
 		Error:     err.Error(),
 	}
 
-	jsonResponse, _ := json.Marshal(errorResponse)
-		fmt.Fprint(w, string(jsonResponse))
+	jsonResponse, _ := json.Marshal(errorResponse);
+
+	fmt.Fprint(w, string(jsonResponse))
 }
 
 
 // sendSuccessResponse - функция для отправки успешного ответа
 func sendSuccessResponse(w http.ResponseWriter, answer float64) {
-	succesResponse := Response{
-		Status:    http.StatusOK,
+	succesResponse := SuccesResponse{
+		Status:		http.StatusOK,
 		Result:   answer,
 	}
 
 	jsonResponse, _ := json.Marshal(succesResponse)
+
+	w.WriteHeader(http.StatusOK)
 	fmt.Fprint(w, string(jsonResponse))
+	
 }
 
 // CalcHandler - обработчик запроса
